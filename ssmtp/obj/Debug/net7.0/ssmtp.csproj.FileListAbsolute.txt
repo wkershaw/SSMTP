@@ -1,0 +1,15 @@
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.csproj.AssemblyReference.cache
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.GeneratedMSBuildEditorConfig.editorconfig
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.AssemblyInfoInputs.cache
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.AssemblyInfo.cs
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.csproj.CoreCompileInputs.cache
+/home/will/Documents/net/ssmtp/ssmtp/bin/Debug/net7.0/ssmtp
+/home/will/Documents/net/ssmtp/ssmtp/bin/Debug/net7.0/ssmtp.deps.json
+/home/will/Documents/net/ssmtp/ssmtp/bin/Debug/net7.0/ssmtp.runtimeconfig.json
+/home/will/Documents/net/ssmtp/ssmtp/bin/Debug/net7.0/ssmtp.dll
+/home/will/Documents/net/ssmtp/ssmtp/bin/Debug/net7.0/ssmtp.pdb
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.dll
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/refint/ssmtp.dll
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.pdb
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ssmtp.genruntimeconfig.cache
+/home/will/Documents/net/ssmtp/ssmtp/obj/Debug/net7.0/ref/ssmtp.dll
