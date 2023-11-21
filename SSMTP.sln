@@ -8,8 +8,13 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ssmtp", "ssmtp\Ssmtp.csproj", "{9BDC75FF-C8F1-4F4C-B4B3-F356A721F8A3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ssmtp.Aspire.AppHost", "Ssmtp.Aspire\Ssmtp.Aspire.AppHost\Ssmtp.Aspire.AppHost.csproj", "{7E10F415-DA9D-4AC3-97DF-99764EBBC521}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9BDC75FF-C8F1-4F4C-B4B3-F356A721F8A3} = {9BDC75FF-C8F1-4F4C-B4B3-F356A721F8A3}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ssmtp.Aspire.ServiceDefaults", "Ssmtp.Aspire\Ssmtp.Aspire.ServiceDefaults\Ssmtp.Aspire.ServiceDefaults.csproj", "{1F7B3AA6-71E1-4440-86AB-D94EDF72B57A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SSMTP.API", "SSMTP.API\SSMTP.API.csproj", "{348DAE2A-A5B3-43DA-A41B-7B3D57F6B46C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +38,10 @@ Global
 		{1F7B3AA6-71E1-4440-86AB-D94EDF72B57A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1F7B3AA6-71E1-4440-86AB-D94EDF72B57A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1F7B3AA6-71E1-4440-86AB-D94EDF72B57A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{348DAE2A-A5B3-43DA-A41B-7B3D57F6B46C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{348DAE2A-A5B3-43DA-A41B-7B3D57F6B46C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{348DAE2A-A5B3-43DA-A41B-7B3D57F6B46C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{348DAE2A-A5B3-43DA-A41B-7B3D57F6B46C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
