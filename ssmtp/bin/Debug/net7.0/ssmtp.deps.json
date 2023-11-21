@@ -6,15 +6,15 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v7.0": {
-      "ssmtp/1.0.0": {
+      "Ssmtp/1.0.0": {
         "runtime": {
-          "ssmtp.dll": {}
+          "Ssmtp.dll": {}
         }
       }
     }
   },
   "libraries": {
-    "ssmtp/1.0.0": {
+    "Ssmtp/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

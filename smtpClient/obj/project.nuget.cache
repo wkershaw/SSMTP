@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Ex/j9EXWMLFzoFCYFwhv6aRG0EK/S1OfLLaGk2SDsCiVYB/PC1CsOK6CHS+KdqikL0EMfs47FnYZljssKJfT4Q==",
+  "dgSpecHash": "R99xTsU32wPvkHLtokucBxxdC+98oJR6nrvREkVlD25KXT7ZbG3a4XLEHft4gwmoQWC6tl//Oq14eTOihMFbug==",
   "success": true,
-  "projectFilePath": "/home/will/Documents/net/SSMTP/smtpClient/smtpClient.csproj",
+  "projectFilePath": "C:\\Users\\wkers\\source\\repos\\SSMTP\\smtpClient\\SmtpClient.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }
