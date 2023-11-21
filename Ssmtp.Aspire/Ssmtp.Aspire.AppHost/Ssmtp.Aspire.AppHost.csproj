@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\SSMTP.API\SSMTP.API.csproj" />
+    <ProjectReference Include="..\..\SSMTP.Server\SSMTP.Server.csproj" />
   </ItemGroup>
 
 </Project>
