@@ -3,23 +3,33 @@ using System.Net.Sockets;
 
 namespace SSMTP.Server
 {
+	/// <summary>
+	/// A server that listens to incoming TCP connections and handles SMTP
+	/// requests from the client
+	/// </summary>
 	public class Server : BackgroundService
 	{
+		private static readonly IPAddress SERVER_ADDRESS = IPAddress.Parse("127.0.0.1");
+		private const int SERVER_PORT = 2025;
+
 		private readonly TcpListener _tcpListener;
 		private readonly ILogger _logger;
 
-		public Server(
-			ILogger<Server> logger) : base()
+		/// <summary>
+		/// Create a new instance of the SMTP server
+		/// </summary>
+		/// <param name="logger">A logger for adding information to the server log</param>
+		public Server(ILogger<Server> logger) : base()
 		{
-			string address = "127.0.0.1";
-			int port = 2025;
-
 			_logger = logger;
-			
-			IPAddress localAddress = IPAddress.Parse(address);
-			_tcpListener = new TcpListener(localAddress, port);
+			_tcpListener = new TcpListener(SERVER_ADDRESS, SERVER_PORT);
 		}
 
+		/// <summary>
+		/// Called when the server starts. Handles the setup of the TCP listener
+		/// and begins handling requests.
+		/// </summary>
+		/// <param name="stoppingToken">A cancellation token for stopping the server</param>
 		protected async override Task ExecuteAsync(CancellationToken stoppingToken)
 		{
 			try
@@ -35,7 +45,11 @@ namespace SSMTP.Server
 			}
 			catch (SocketException e)
 			{
-				_logger.LogError(e, "An error occurred during inner loop");
+				_logger.LogError(e, "A socket exception occurred during inner loop");
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "An error occurred during the inner loop");
 			}
 			finally
 			{
@@ -46,13 +60,13 @@ namespace SSMTP.Server
 
 		private async Task InnerLoop(CancellationToken stoppingToken)
 		{
-			using TcpClient client = await _tcpListener.AcceptTcpClientAsync();
-			_logger.LogDebug("Connected!");
+			using TcpClient client = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
+			_logger.LogDebug("A client has connected to the SSMTP server");
 
 			var stream = new SmtpStream(_logger, client.GetStream());
 
 			// Write opening message
-			string opener = "220 localhost:2025";
+			string opener = $"220 {SERVER_ADDRESS}:{SERVER_PORT}";
 			await stream.WriteAsync(opener, stoppingToken);
 
 			var conversation = new Conversation();
@@ -64,7 +78,17 @@ namespace SSMTP.Server
 				{
 					var command = await stream.ReadNextAsync(stoppingToken);
 					var response = conversation.HandleCommand(command);
-					await stream.WriteAsync(response, stoppingToken);
+					
+					if(response != "")
+					{
+						await stream.WriteAsync(response, stoppingToken);
+					}
+
+					if (response == "250 Ok: closing")
+					{
+						stream.Close();
+					}
+
 				}
 				catch (Exception e)
 				{
@@ -72,8 +96,7 @@ namespace SSMTP.Server
 				}
 			}
 
-			_logger.LogDebug("Email Sent!");
-			_logger.LogDebug(conversation.ToString());
+			_logger.LogDebug("Email Sent: {conversation}", conversation.ToString());
 		}
 	}
 }

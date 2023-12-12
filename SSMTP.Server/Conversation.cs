@@ -1,5 +1,9 @@
 ﻿namespace SSMTP.Server
 {
+	/// <summary>
+	/// A list of the possible commands sent from the client
+	/// that this server can handle
+	/// </summary>
 	internal enum Commands
 	{
 		CONNECTION_OPENED,
@@ -28,18 +32,6 @@
 
 		public string HandleCommand(string commandMessage)
 		{
-			if (_previousCommand == Commands.DATA)
-			{
-				string mailContentResponse = HandleMessageContent(commandMessage);
-
-				if (commandMessage.EndsWith("\r\n.\r\n"))
-				{
-					_previousCommand = Commands.MAIL_CONTENT;
-				}
-
-				return mailContentResponse;
-			}
-
 			Commands command = ParseCommand(commandMessage);
 
 			// Use the previous command to det
@@ -50,14 +42,11 @@
 				(Commands.MAIL_FROM, Commands.RCPT_TO) => HandleRcptToCommand(commandMessage),
 				(Commands.RCPT_TO, Commands.RCPT_TO) => HandleRcptToCommand(commandMessage),
 				(Commands.RCPT_TO, Commands.DATA) => HandleDataCommand(),
+				(Commands.DATA, Commands.MAIL_CONTENT) => HandleMailContent(commandMessage),
 				(Commands.MAIL_CONTENT, Commands.QUIT) => HandleQuitCommand(),
 				_ => "Unexpected command"
 			};
 
-			// Update the previous command
-			_previousCommand = command;
-
-			// Return the response to be sent
 			return response;
 		}
 
@@ -70,8 +59,15 @@
 			""";
 		}
 
-		private static Commands ParseCommand(string command)
+		private Commands ParseCommand(string command)
 		{
+			if(_previousCommand == Commands.DATA)
+			{
+				// If the previous command was DATA, we expect
+				// the next message to be the mail content
+				return Commands.MAIL_CONTENT;
+			}
+
 			if (command.StartsWith("EHLO") ||
 				command.StartsWith("HELO"))
 			{
@@ -100,45 +96,60 @@
 
 			throw new Exception("Unrecognised command");
 		}
+		
 		private string HandleEhloCommand()
 		{
+			_previousCommand = Commands.EHLO;
 			return "250 Hello";
 		}
+		
 		private string HandleMailFromCommand(string command)
 		{
 			// Command string is in format: MAIL FROM:<sender@domain.com>
-			string sender = command
-				.Replace("\r\n", "")                    // Remove command line endings
-				.Substring(11, command.Length - 12);        // Pull out the sender email address
+			string sender = command.Replace("\r\n", "");		// Remove command line endings
+			sender = sender.Substring(11, sender.Length - 12);  // Pull out the sender email address
 
 			_sender = sender;
 
+			_previousCommand = Commands.MAIL_FROM;
 			return "250 Ok";
 		}
+		
 		private string HandleRcptToCommand(string command)
 		{
 			// Command string is in format: RCPT TO:<recipient@domain.com>
-			string recipient = command
-				.Replace("\r\n", "")                    // Remove command line endings
-				.Substring(9, command.Length - 10);     // Pull out the sender email address
+			string recipient = command.Replace("\r\n", "");				// Remove command line endings
+			recipient = recipient.Substring(9, recipient.Length - 10);	// Pull out the sender email address
 
 			_recipients.Add(recipient);
 
+			_previousCommand = Commands.RCPT_TO;
 			return "250 Ok";
 		}
+		
 		private string HandleDataCommand()
 		{
+			_previousCommand = Commands.DATA;
 			return "354 End data with <CR><LF>.<CR><LF>";
 		}
-		private string HandleMessageContent(string commandMessage)
+		
+		private string HandleMailContent(string commandMessage)
 		{
-			_messageContent = commandMessage;
-			return "250 Ok";
-		}
-		private string HandleQuitCommand()
-		{
-			return "221 Bye";
+			_messageContent += commandMessage;
+			
+			if (commandMessage.EndsWith("\r\n.\r\n"))
+			{
+				_previousCommand = Commands.MAIL_CONTENT;
+				return "250 Ok: closing";
+			}
+
+			return "";
 		}
 
+		private string HandleQuitCommand()
+		{
+			_previousCommand = Commands.QUIT;
+			return "221 Bye";
+		}
 	}
 }
