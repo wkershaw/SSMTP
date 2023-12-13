@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Ssmtp.Aspire\Ssmtp.Aspire.ServiceDefaults\Ssmtp.Aspire.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\SSMTP.Core\SSMTP.Core.csproj" />
   </ItemGroup>
 
 </Project>

@@ -6,8 +6,9 @@ namespace SSMTP.Server
 	/// <summary>
 	/// Represents a network stream with a client used to send and receive SMTP messages
 	/// </summary>
-	internal class SmtpStream
+	internal class SmtpStream : IDisposable
 	{
+		private bool _disposed;
 		private readonly ILogger _logger;
 		private readonly NetworkStream _networkStream;
 
@@ -69,6 +70,24 @@ namespace SSMTP.Server
 		{
 			_logger.LogDebug("Closing connection with client");
 			_networkStream?.Close();
+		}
+
+		public void Dispose()
+		{
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+	
+		protected void Dispose(bool disposing)
+		{
+			if(!_disposed)
+			{
+				if (disposing)
+				{
+					_networkStream?.Dispose();
+				}
+				_disposed = true;
+			}
 		}
 	}
 }
