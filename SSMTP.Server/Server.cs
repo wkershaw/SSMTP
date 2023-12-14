@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using SSMTP.Core.Tcp;
+using System.Net;
 using System.Net.Sockets;
 
 namespace SSMTP.Server
@@ -14,6 +15,7 @@ namespace SSMTP.Server
 
 		private readonly TcpListener _tcpListener;
 		private readonly ILogger _logger;
+		private readonly List<SmtpConnection> _connections;
 
 		/// <summary>
 		/// Create a new instance of the SMTP server
@@ -23,6 +25,7 @@ namespace SSMTP.Server
 		{
 			_logger = logger;
 			_tcpListener = new TcpListener(SERVER_ADDRESS, SERVER_PORT);
+			_connections = new List<SmtpConnection>();
 		}
 
 		/// <summary>
@@ -40,7 +43,7 @@ namespace SSMTP.Server
 				// Enter the listening loop.
 				while (!stoppingToken.IsCancellationRequested)
 				{
-					await InnerLoop(stoppingToken);
+					await AcceptNextConnectionAsync(stoppingToken);
 				}
 			}
 			catch (SocketException e)
@@ -58,45 +61,22 @@ namespace SSMTP.Server
 			}
 		}
 
-		private async Task InnerLoop(CancellationToken stoppingToken)
+		private async Task AcceptNextConnectionAsync(CancellationToken stoppingToken)
 		{
-			using TcpClient client = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
+			TcpClient client = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
 			_logger.LogDebug("A client has connected to the SSMTP server");
 
-			var stream = new SmtpStream(_logger, client.GetStream());
-
-			// Write opening message
-			string opener = $"220 {SERVER_ADDRESS}:{SERVER_PORT}";
-			await stream.WriteAsync(opener, stoppingToken);
-
-			var conversation = new Conversation();
-
-			// Handle all client commands
-			while (client.Connected)
+			var connection = new SmtpConnection(_logger, client);
+			connection.OnClosed += (e, s) =>
 			{
-				try
-				{
-					var command = await stream.ReadNextAsync(stoppingToken);
-					var response = conversation.HandleCommand(command);
-					
-					if(response != "")
-					{
-						await stream.WriteAsync(response, stoppingToken);
-					}
+				_logger.LogInformation("Connection closed");
+				connection.Dispose();
+				_connections.Remove(connection);
+			};
 
-					if (response == "250 Ok: closing")
-					{
-						stream.Close();
-					}
+			_connections.Add(connection);
 
-				}
-				catch (Exception e)
-				{
-					_logger.LogError(e, "Unable to handle command");
-				}
-			}
-
-			_logger.LogDebug("Email Sent: {conversation}", conversation.ToString());
+			_ = connection.HandleAsync(stoppingToken);
 		}
 	}
 }
