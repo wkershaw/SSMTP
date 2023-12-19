@@ -7,19 +7,23 @@ namespace SSMTP.Core.Tcp
     {
 		private bool _disposed = false;
 
+		private readonly ILoggerFactory _loggerFactory;
 		private readonly ILogger _logger;
+		
 		private readonly TcpClient _tcpClient;
         private readonly SmtpStream _smtpStream;
 
 		public event EventHandler<EventArgs>? OnClosed;
 
-        public SmtpConnection(ILogger logger, TcpClient tcpClient)
+        public SmtpConnection(ILoggerFactory loggerFactory, TcpClient tcpClient)
         {
-			_logger = logger;
-            _tcpClient = tcpClient;
+			_loggerFactory = loggerFactory;
+			_logger = loggerFactory.CreateLogger<SmtpConnection>();
+        
+			_tcpClient = tcpClient;
 
             var networkStream = tcpClient.GetStream();
-            _smtpStream = new SmtpStream(networkStream);
+            _smtpStream = new SmtpStream(loggerFactory.CreateLogger<SmtpStream>(), networkStream);
         }
 
 		public async Task HandleAsync(CancellationToken stoppingToken)
@@ -30,50 +34,48 @@ namespace SSMTP.Core.Tcp
 			_logger.LogDebug("Opener sent");
 
 			var conversation = new SmtpConversation();
-
-			// Handle all client commands
-			while (_tcpClient.Connected)
+			conversation.EmailHandled += (e, email) =>
 			{
-				try
-				{
-					while(true)
-					{
-						var command = await _smtpStream.ReadNextAsync(stoppingToken);
-						_logger.LogDebug("Command recieved '{command}'", command);
-					
-						var response = conversation.HandleCommand(command);
-						
-						if (response == "")
-						{
-							continue;
-						}
-						
-						if (response == "221 Bye")
-						{
-							break;
-						}
+				_logger.LogInformation("Email handled: '{email}'", email);
+			};
 
-						await _smtpStream.WriteAsync(response, stoppingToken);
-						_logger.LogDebug("Response sent '{response}'", response);
+			try
+			{
+				while(_tcpClient.Connected)
+				{
+					var command = await _smtpStream.ReadNextAsync(stoppingToken);		
+					var response = conversation.HandleCommand(command);
+						
+					if (response == "")
+					{
+						continue;
+					}
+						
+					await _smtpStream.WriteAsync(response, stoppingToken);
+						
+					if (response == "221 Bye")
+					{
+						break;
 					}
 				}
-				catch (IOException)
-				{
-					_logger.LogDebug("Connection closed by client");
-				}
-				catch (Exception e)
-				{
-					_logger.LogError(e, "Unable to handle command");
-				}
-				finally
-				{
-					Close();
-				}
+			}
+			catch (IOException)
+			{
+				_logger.LogInformation("Connection closed by client");
+			}
+			catch (Exception e)
+			{
+				_logger.LogError(e, "Unable to handle command");
+			}
+			finally
+			{
+				Close();
 			}
 		}
 		
 		public void Close()
 		{
+			_logger.LogInformation("Closing SMTP connection");
 			_tcpClient.Close();
 			OnClosed?.Invoke(this, EventArgs.Empty);
 		}

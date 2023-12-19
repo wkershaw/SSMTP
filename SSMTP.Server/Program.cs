@@ -4,7 +4,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-builder.Services.AddHostedService<Server>();
+builder.Services.AddHostedService<SsmtpServer>();
 
 var app = builder.Build();
 

@@ -8,24 +8,27 @@ namespace SSMTP.Server
 	/// A server that listens to incoming TCP connections and handles SMTP
 	/// requests from the client
 	/// </summary>
-	public class Server : BackgroundService
+	public class SsmtpServer : BackgroundService
 	{
 		private static readonly IPAddress SERVER_ADDRESS = IPAddress.Parse("127.0.0.1");
 		private const int SERVER_PORT = 2025;
 
+		private readonly ILoggerFactory _loggerFactory;
+		private readonly ILogger<SsmtpServer> _logger;
+
 		private readonly TcpListener _tcpListener;
-		private readonly ILogger _logger;
 		private readonly List<SmtpConnection> _connections;
 
 		/// <summary>
 		/// Create a new instance of the SMTP server
 		/// </summary>
 		/// <param name="logger">A logger for adding information to the server log</param>
-		public Server(ILogger<Server> logger) : base()
+		public SsmtpServer(ILoggerFactory loggerFactory) : base()
 		{
-			_logger = logger;
+			_loggerFactory = loggerFactory;
+			_logger = loggerFactory.CreateLogger<SsmtpServer>();
 			_tcpListener = new TcpListener(SERVER_ADDRESS, SERVER_PORT);
-			_connections = new List<SmtpConnection>();
+			_connections = [];
 		}
 
 		/// <summary>
@@ -40,7 +43,6 @@ namespace SSMTP.Server
 				_logger.LogInformation("SSMTP server starting");
 				_tcpListener.Start();
 
-				// Enter the listening loop.
 				while (!stoppingToken.IsCancellationRequested)
 				{
 					await AcceptNextConnectionAsync(stoppingToken);
@@ -57,16 +59,25 @@ namespace SSMTP.Server
 			finally
 			{
 				_logger.LogInformation("SSMTP server stopping");
+
+				foreach (SmtpConnection connection in _connections)
+				{
+					connection.Close();
+				}
+
 				_tcpListener.Stop();
 			}
 		}
 
+		/// <summary>
+		/// Accept the next TCP connection from an SMTP client
+		/// </summary>
 		private async Task AcceptNextConnectionAsync(CancellationToken stoppingToken)
 		{
 			TcpClient client = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
 			_logger.LogDebug("A client has connected to the SSMTP server");
 
-			var connection = new SmtpConnection(_logger, client);
+			var connection = new SmtpConnection(_loggerFactory, client);
 			connection.OnClosed += (e, s) =>
 			{
 				_logger.LogInformation("Connection closed");
@@ -76,6 +87,7 @@ namespace SSMTP.Server
 
 			_connections.Add(connection);
 
+			// Begin handling requests from the SMTP client
 			_ = connection.HandleAsync(stoppingToken);
 		}
 	}

@@ -1,4 +1,5 @@
-﻿using System.Net.Sockets;
+﻿using Microsoft.Extensions.Logging;
+using System.Net.Sockets;
 using System.Text;
 
 namespace SSMTP.Core.Tcp;
@@ -9,6 +10,8 @@ namespace SSMTP.Core.Tcp;
 internal class SmtpStream : IDisposable
 {
     private bool _disposed = false;
+
+	private readonly ILogger<SmtpStream> _logger;
     private readonly NetworkStream _networkStream;
 
     /// <summary>
@@ -16,8 +19,11 @@ internal class SmtpStream : IDisposable
     /// </summary>
     /// <param name="logger">A logger for writing to the server log</param>
     /// <param name="networkStream">A network stream for the connection to the client</param>
-    public SmtpStream(NetworkStream networkStream)
+    public SmtpStream(
+		ILogger<SmtpStream> logger,
+		NetworkStream networkStream)
     {
+		_logger = logger;
         _networkStream = networkStream;
     }
 
@@ -36,6 +42,7 @@ internal class SmtpStream : IDisposable
             toSend = message + "\r\n";
         }
 
+		_logger.LogDebug("Writing to SMTP Stream '{message}'", message);
         await _networkStream.WriteAsync(Encoding.ASCII.GetBytes(toSend), cancellationToken);
     }
 
@@ -52,7 +59,8 @@ internal class SmtpStream : IDisposable
         // Read message
         string message = Encoding.ASCII.GetString(bytes, 0, bytesReadCount);
 
-        return message;
+		_logger.LogDebug("Reading from SMTP Stream '{message}'", message);
+		return message;
     }
 
     /// <summary>

@@ -17,24 +17,17 @@ internal enum Commands
 
 internal class SmtpConversation
 {
-	private Commands _previousCommand;
-	string _sender;
-	private List<string> _recipients;
-	private string _messageContent;
+	public event EventHandler<string>? EmailHandled;
 
-	public SmtpConversation()
-	{
-		_previousCommand = Commands.CONNECTION_OPENED;
-		_sender = "";
-		_recipients = new List<string>();
-		_messageContent = "";
-	}
+	private readonly List<string> _recipients = [];
+	private Commands _previousCommand = Commands.CONNECTION_OPENED;
+	string _sender = "";
+	private string _messageContent = "";
 
 	public string HandleCommand(string commandMessage)
 	{
 		Commands command = ParseCommand(commandMessage);
 
-		// Use the previous command to det
 		string response = (_previousCommand, command) switch
 		{
 			(Commands.CONNECTION_OPENED, Commands.EHLO) => HandleEhloCommand(),
@@ -49,15 +42,6 @@ internal class SmtpConversation
 		};
 
 		return response;
-	}
-
-	public override string ToString()
-	{
-		return $"""
-		To: {string.Join(',', _recipients)}
-		From: {_sender}
-		{_messageContent}
-		""";
 	}
 
 	private Commands ParseCommand(string command)
@@ -107,8 +91,8 @@ internal class SmtpConversation
 	private string HandleMailFromCommand(string command)
 	{
 		// Command string is in format: MAIL FROM:<sender@domain.com>
-		string sender = command.Replace("\r\n", "");        // Remove command line endings
-		sender = sender.Substring(11, sender.Length - 12);  // Pull out the sender email address
+		string sender = command.Replace("\r\n", ""); // Remove command line endings
+		sender = sender[11..^1];  // Pull out the sender email address
 
 		_sender = sender;
 
@@ -119,8 +103,8 @@ internal class SmtpConversation
 	private string HandleRcptToCommand(string command)
 	{
 		// Command string is in format: RCPT TO:<recipient@domain.com>
-		string recipient = command.Replace("\r\n", "");             // Remove command line endings
-		recipient = recipient.Substring(9, recipient.Length - 10);  // Pull out the sender email address
+		string recipient = command.Replace("\r\n", ""); // Remove command line endings
+		recipient = recipient[9..^1];  // Pull out the sender email address
 
 		_recipients.Add(recipient);
 
@@ -141,6 +125,10 @@ internal class SmtpConversation
 		if (commandMessage.EndsWith("\r\n.\r\n"))
 		{
 			_previousCommand = Commands.MAIL_CONTENT;
+
+			EmailHandled?.Invoke(this, _messageContent);
+			_messageContent = "";
+
 			return "250 Ok";
 		}
 
